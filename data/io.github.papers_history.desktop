@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Papers History
+GenericName=Recent PDFs
+Comment=Search your recent PDFs and open them in Papers
+Exec=papers-history %f
+Icon=io.github.papers_history
+Terminal=false
+Categories=Office;Viewer;
+Keywords=pdf;papers;recent;history;documents;
+StartupNotify=true
+StartupWMClass=io.github.papers_history
