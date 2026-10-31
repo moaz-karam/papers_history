@@ -3,16 +3,23 @@
 set -euo pipefail
 
 prefix="${PREFIX:-$HOME/.local}"
-app_dir="$prefix/share/papers-history"
+app_dir="$prefix/lib/papers-history"          # application code only
 launcher="$prefix/bin/papers-history"
 desktop_file="$prefix/share/applications/io.github.papers_history.desktop"
 icon_file="$prefix/share/icons/hicolor/scalable/apps/io.github.papers_history.svg"
+# Where the app itself stores history.json — never deleted by this script.
+data_dir="${XDG_DATA_HOME:-$HOME/.local/share}/papers-history"
+# Code location used by older installs, cleaned up below.
+legacy_dir="$prefix/share/papers-history/papers_history"
 repo_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
 if [[ "${1:-}" == "--uninstall" ]]; then
-    rm -rf "$app_dir"
+    rm -rf "$app_dir" "$legacy_dir"
     rm -f "$launcher" "$desktop_file" "$icon_file"
+    # Only succeeds when the folder is empty, so a history file survives.
+    rmdir "$prefix/share/papers-history" 2>/dev/null || true
     echo "Removed Papers History from $prefix"
+    echo "Your history is kept in $data_dir"
     exit 0
 fi
 
@@ -37,13 +44,14 @@ install -d "$app_dir" "$prefix/bin"
 rm -rf "$app_dir/papers_history"
 cp -r "$repo_dir/papers_history" "$app_dir/papers_history"
 find "$app_dir/papers_history" -name '__pycache__' -type d -prune -exec rm -rf {} +
+rm -rf "$legacy_dir"
 
 cat > "$launcher" <<'LAUNCHER'
 #!/usr/bin/env python3
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "share" / "papers-history"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "lib" / "papers-history"))
 
 from papers_history.ui import main
 

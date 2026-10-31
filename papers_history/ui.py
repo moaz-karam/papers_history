@@ -209,8 +209,12 @@ class PapersWindow(Adw.ApplicationWindow):
         toolbar.set_content(self.toasts)
         self.set_content(toolbar)
 
-        self.row_menu = Gtk.PopoverMenu.new_from_model(self._build_row_menu())
-        self.row_menu.connect("closed", lambda popover: popover.unparent())
+        self.row_menu = Gtk.PopoverMenu()
+        # Attach before setting the model: GtkPopoverMenu resolves its item
+        # actions (win.*) through the widget tree, so the tracker must be
+        # created while the popover is already parented.
+        self.row_menu.set_parent(self.listbox)
+        self.row_menu.set_menu_model(self._build_row_menu())
 
     def _build_menu(self) -> Gio.Menu:
         menu = Gio.Menu()
@@ -295,7 +299,8 @@ class PapersWindow(Adw.ApplicationWindow):
         child = self.listbox.get_first_child()
         while child is not None:
             following = child.get_next_sibling()
-            self.listbox.remove(child)
+            if isinstance(child, Gtk.ListBoxRow):
+                self.listbox.remove(child)
             child = following
 
         selected_row = None
@@ -421,9 +426,6 @@ class PapersWindow(Adw.ApplicationWindow):
         self.listbox.select_row(row)
         rect = Gdk.Rectangle()
         rect.x, rect.y, rect.width, rect.height = int(x), int(y), 1, 1
-        if self.row_menu.get_parent() is not None:
-            self.row_menu.unparent()
-        self.row_menu.set_parent(self.listbox)
         self.row_menu.set_pointing_to(rect)
         self.row_menu.popup()
 
